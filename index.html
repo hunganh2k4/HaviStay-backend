@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Airbnb Clone - Trang chủ</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Circular Std', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #222;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      z-index: 1000;
+      padding: 8px 0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .header-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
+      color: #ff385c;
+      text-decoration: none;
+    }
+
+    .search-bar {
+      flex: 1;
+      max-width: 600px;
+      margin: 0 40px;
+      display: flex;
+      background: white;
+      border-radius: 40px;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      height: 48px;
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      padding: 16px 24px;
+      font-size: 16px;
+    }
+
+    .search-btn {
+      background: #ff385c;
+      color: white;
+      border: none;
+      padding: 16px 24px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .header-icons {
+      display: flex;
+      gap: 16px;
+    }
+
+    .header-icons i {
+      font-size: 20px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+
+    .header-icons i:hover {
+      background: #f7f7f7;
+    }
+
+    .profile {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #ff385c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Hero Section */
+    .hero {
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.05"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grain)"/></svg>');
+    }
+
+    .hero-content {
+      max-width: 800px;
+      z-index: 2;
+      position: relative;
+    }
+
+    .hero h1 {
+      font-size: 64px;
+      font-weight: 800;
+      margin-bottom: 24px;
+      line-height: 1.1;
+    }
+
+    .hero p {
+      font-size: 24px;
+      margin-bottom: 40px;
+      opacity: 0.9;
+    }
+
+    .hero-search {
+      background: white;
+      border-radius: 40px;
+      padding: 24px;
+      max-width: 700px;
+      margin: 0 auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    }
+
+    .search-tabs {
+      display: flex;
+      margin-bottom: 24px;
+      gap: 8px;
+    }
+
+    .search-tab {
+      padding: 12px 24px;
+      border-radius: 24px;
+      background: #f7f7f7;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .search-tab.active {
+      background: #ff385c;
+      color: white;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .search-group {
+      flex: 1;
+      position: relative;
+    }
+
+    .search-group input {
+      width: 100%;
+      padding: 16px 20px;
+      border: 2px solid #f7f7f7;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .search-group input:focus {
+      outline: none;
+      border-color: #ff385c;
+    }
+
+    .search-group i {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #666;
+    }
+
+    .search-submit {
+      background: #ff385c;
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s;
+    }
+
+    .search-submit:hover {
+      background: #e31c5d;
+    }
+
+    /* Categories */
+    .categories {
+      padding: 80px 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      font-size: 48px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 32px;
+      margin-bottom: 80px;
+    }
+
+    .category-card {
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .category-card:hover {
+      transform: translateY(-8px);
+    }
+
+    .category-icon {
+      width: 72px;
+      height: 72px;
+      background: #ff385c;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 28px;
+      color: white;
+    }
+
+    .category-card h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .category-card p {
+      color: #666;
+      font-size: 16px;
+    }
+
+    /* Featured */
+    .featured {
+      padding: 0 24px 80px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .featured-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .listing-card {
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+
+    .listing-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .listing-image {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+      position: relative;
+    }
+
+    .listing-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: #ff385c;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .listing-content {
+      padding: 20px;
+    }
+
+    .listing-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .listing-location {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .listing-price {
+      font-size: 20px;
+      font-weight: 800;
+      color: #ff385c;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 48px;
+      }
+
+      .hero p {
+        font-size: 20px;
+      }
+
+      .search-row {
+        flex-direction: column;
+      }
+
+      .header-container {
+        padding: 0 16px;
+      }
+
+      .search-bar {
+        margin: 0 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-container">
+      <a href="#" class="logo">airbnb</a>
+      <div class="search-bar">
+        <input type="text" class="search-input" placeholder="Đi đâu...?">
+        <button class="search-btn">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      <div class="header-right">
+        <div class="header-icons">
+          <i class="fas fa-globe"></i>
+          <i class="fas fa-user-circle"></i>
+          <i class="fas fa-heart"></i>
+        </div>
+        <div class="profile">HN</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Chào mừng đến với <br>Airbnb Việt Nam</h1>
+      <p>Khám phá không gian lưu trú độc đáo và trải nghiệm địa phương đáng nhớ.</p>
+      <div class="hero-search">
+        <div class="search-tabs">
+          <button class="search-tab active">Ở</button>
+          <button class="search-tab">Trải nghiệm</button>
+        </div>
+        <div class="search-row">
+          <div class="search-group">
+            <input type="text" placeholder="Đi đâu?">
+            <i class="fas fa-map-marker-alt"></i>
+          </div>
+          <div class="search-group">
+            <input type="date" placeholder="Nhận phòng">
+          </div>
+          <div class="search-group">
+            <input type="date" placeholder="Trả phòng">
+          </div>
+        </div>
+        <div class="search-group">
+          <input type="number" placeholder="2 khách">
+          <i class="fas fa-user-friends"></i>
+        </div>
+        <button class="search-submit">
+          <i class="fas fa-search"></i> Tìm kiếm
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories -->
+  <section class="categories">
+    <h2 class="section-title">Khám phá theo danh mục</h2>
+    <div class="categories-grid">
+      <div class="category-card">
+        <div class="category-icon">
+          <i class="fas fa-home"></i>
+        </div>
+        <h3>Nhà nguyên căn</h3>
+        <p>Phòng riêng tư và không gian rộng rãi</p>
+      </div>
+      <div class="category-card">
+        <div class="category-icon">
+          <i class="fas fa-mountain"></i>
+        </div>
+        <h3>Nhà trên núi</h3>
+        <p>Trải nghiệm thiên nhiên tuyệt vời</p>
+      </div>
+      <div class="category-card">
+        <div class="category-icon">
+          <i class="fas fa-water"></i>
+        </div>
+        <h3>Nhà bên biển</h3>
+        <p>Thư giãn bên bờ biển</p>
+      </div>
+      <div class="category-card">
+        <div class="category-icon">
+          <i class="fas fa-utensils"></i>
+        </div>
+        <h3>Nhà có bếp</h3>
+        <p>Tự nấu ăn như người bản địa</p>
+      </div>
+      <div class="category-card">
+        <div class="category-icon">
+          <i class="fas fa-wind"></i>
+        </div>
+        <h3>Nhà có điều hoà</h3>
+        <p>Giữ mát mẻ mọi lúc</p>
+      </div>
+      <div class="category-card">
+        <div class="category-icon">
+          <i class="fas fa-snowflake"></i>
+        </div>
+        <h3>Nhà có máy sưởi</h3>
+        <p>Giữ ấm áp trong mùa đông</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Listings -->
+  <section class="featured">
+    <h2 class="section-title">Nơi ở nổi bật</h2>
+    <div class="featured-grid">
+      <div class="listing-card">
+        <div class="listing-image">
+          <div class="listing-badge">Nổi bật</div>
+        </div>
+        <div class="listing-content">
+          <h3 class="listing-title">Biệt thự hiện đại 4 phòng ngủ</h3>
+          <p class="listing-location">Quận 7, TP.HCM · 4 khách · 2 phòng ngủ</p>
+          <div class="listing-price">2.500.000đ/đêm</div>
+        </div>
+      </div>
+      <div class="listing-card">
+        <div class="listing-image">
+          <div class="listing-badge">Hot</div>
+        </div>
+        <div class="listing-content">
+          <h3 class="listing-title">Homestay view biển tuyệt đẹp</h3>
+          <p class="listing-location">Nha Trang, Khánh Hoà · 6 khách · 3 phòng ngủ</p>
+          <div class="listing-price">1.800.000đ/đêm</div>
+        </div>
+      </div>
+      <div class="listing-card">
+        <div class="listing-image">
+          <div class="listing-badge">Mới</div>
+        </div>
+        <div class="listing-content">
+          <h3 class="listing-title">Căn hộ cao cấp trung tâm</h3>
+          <p class="listing-location">Hoàn Kiếm, Hà Nội · 2 khách · 1 phòng ngủ</p>
+          <div class="listing-price">1.200.000đ/đêm</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Search tab functionality
+    const tabs = document.querySelectorAll('.search-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // Smooth scroll for category cards
+    document.querySelectorAll('.category-card').forEach(card => {
+      card.addEventListener('click', () => {
+        // Add your search functionality here
+        console.log('Searching for:', card.querySelector('h3').textContent);
+      });
+    });
+
+    // Header scroll effect
+    window.addEventListener('scroll', () => {
+      const header = document.querySelector('.header');
+      if (window.scrollY > 100) {
+        header.style.background = 'rgba(255, 255, 255, 0.98)';
+      } else {
+        header.style.background = 'rgba(255, 255, 255, 0.95)';
+      }
+    });
+  </script>
+</body>
+
+</html>

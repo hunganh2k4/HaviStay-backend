@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  GUEST
+  HOST
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum RoomType {
+  STANDARD
+  VIP
+  DELUXE
+  SUITE
+}
+
+model User {
+  id              String  @id @default(uuid())
+  name            String
+  email           String  @unique
+  password        String
+  avatar          String?
+  phone           String?
+  role            Role    @default(GUEST)
+  isEmailVerified Boolean @default(false)
+
+  properties Property[]
+  bookings   Booking[]
+  reviews    Review[]
+  wishlists  Wishlist[]
+  payments   Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  type      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Property {
+  id String @id @default(uuid())
+
+  title       String
+  description String
+
+  location String
+  country  String
+  address  String?
+
+  latitude  Float?
+  longitude Float?
+
+  images String[]
+
+  isPublished Boolean @default(true)
+
+  hostId String
+  host   User   @relation(fields: [hostId], references: [id])
+
+  rooms     Room[]
+  reviews   Review[]
+  wishlists Wishlist[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Room {
+  id String @id @default(uuid())
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  name String
+  type RoomType @default(STANDARD)
+
+  description String?
+
+  pricePerNight Float
+
+  cleaningFee Float @default(0)
+  serviceFee  Float @default(0)
+
+  guests    Int
+  bedrooms  Int
+  beds      Int
+  bathrooms Int
+
+  images String[]
+
+  bookings Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Booking {
+  id String @id @default(uuid())
+
+  userId String
+  roomId String
+
+  checkIn  DateTime
+  checkOut DateTime
+
+  nights      Int
+  guestsCount Int
+
+  totalPrice Float
+
+  status BookingStatus @default(PENDING)
+
+  user User @relation(fields: [userId], references: [id])
+  room Room @relation(fields: [roomId], references: [id])
+
+  payment Payment?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id String @id @default(uuid())
+
+  userId     String
+  propertyId String
+
+  rating  Int
+  comment String
+
+  user     User     @relation(fields: [userId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, propertyId])
+}
+
+model Wishlist {
+  id String @id @default(uuid())
+
+  userId     String
+  propertyId String
+
+  user     User     @relation(fields: [userId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, propertyId])
+}
+
+model Payment {
+  id String @id @default(uuid())
+
+  userId    String
+  bookingId String @unique
+
+  stripeSessionId String? @unique
+
+  amount   Float
+  currency String @default("usd")
+
+  status PaymentStatus @default(PENDING)
+
+  user    User    @relation(fields: [userId], references: [id])
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
