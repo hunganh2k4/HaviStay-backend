@@ -28,6 +28,17 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum VerificationType {
+  PERSONAL
+  BUSINESS
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum RoomType {
   STANDARD
   VIP
@@ -42,8 +53,6 @@ model User {
   password        String
   avatar          String?
   phone           String?
-  cccdNumber      String?
-  cccdImage       String?
   role            Role    @default(GUEST)
   isEmailVerified Boolean @default(false)
 
@@ -52,6 +61,7 @@ model User {
   reviews    Review[]
   wishlists  Wishlist[]
   payments   Payment[]
+  hostVerifications HostVerification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -198,4 +208,32 @@ model Payment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model HostVerification {
+  id                  String             @id @default(uuid())
+  userId              String
+  verificationType    VerificationType
+  
+  // PERSONAL fields
+  fullName            String?
+  cccdNumber          String?
+  cccdFrontImage      String?
+  cccdBackImage       String?
+  selfieImage         String?
+  
+  // BUSINESS fields
+  companyName         String?
+  businessLicense     String?
+  taxCode             String?
+  legalRepresentative String?
+  representativeCCCD  String?
+
+  status              VerificationStatus @default(PENDING)
+  reviewNote          String?
+
+  user                User               @relation(fields: [userId], references: [id])
+
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 }

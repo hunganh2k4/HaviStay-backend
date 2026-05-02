@@ -88,4 +88,37 @@ export class SupabaseService {
       throw new InternalServerErrorException('Failed to upload file to storage');
     }
   }
+
+  async uploadVerificationFile(file: Express.Multer.File, prefix: string): Promise<string> {
+    try {
+      if (!this.bucket) {
+        throw new Error('Supabase bucket is not configured');
+      }
+
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const fileExt = extname(file.originalname);
+      const fileName = `verify-${prefix}-${uniqueSuffix}${fileExt}`;
+
+      const { data, error } = await this.supabase.storage
+        .from(this.bucket)
+        .upload(fileName, file.buffer, {
+          contentType: file.mimetype,
+          upsert: false,
+        });
+
+      if (error) {
+        this.logger.error(`Supabase upload error: ${error.message}`);
+        throw error;
+      }
+
+      const { data: { publicUrl } } = this.supabase.storage
+        .from(this.bucket)
+        .getPublicUrl(data.path);
+
+      return publicUrl;
+    } catch (error) {
+      this.logger.error(`Failed to upload verification file: ${error.message}`);
+      throw new InternalServerErrorException('Failed to upload file to storage');
+    }
+  }
 }

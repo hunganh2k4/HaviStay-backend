@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Role } from '@prisma/client';
+import { Role, VerificationStatus } from '@prisma/client';
 import { BecomeHostDto } from './dto/become-host.dto';
 import { AuthService } from '../auth/auth.service';
 
@@ -20,31 +20,77 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
+    // Check if there is already a pending verification
+    const existingPending = await this.prisma.hostVerification.findFirst({
+      where: { userId, status: VerificationStatus.PENDING },
+    });
+
+    if (existingPending) {
+      throw new BadRequestException('You already have a pending host verification request.');
+    }
+
+    // Create HostVerification record
+    const verification = await this.prisma.hostVerification.create({
       data: {
-        role: Role.HOST,
-        phone: dto.phone,
+        userId,
+        verificationType: dto.verificationType,
+        fullName: dto.fullName,
         cccdNumber: dto.cccdNumber,
-        cccdImage: dto.cccdImage,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatar: true,
-        phone: true,
-        cccdNumber: true,
-        cccdImage: true,
-        role: true,
+        cccdFrontImage: dto.cccdFrontImage,
+        cccdBackImage: dto.cccdBackImage,
+        selfieImage: dto.selfieImage,
+        companyName: dto.companyName,
+        taxCode: dto.taxCode,
+        legalRepresentative: dto.legalRepresentative,
+        representativeCCCD: dto.representativeCCCD,
+        businessLicense: dto.businessLicense,
+        status: VerificationStatus.PENDING,
       },
     });
 
-    const access_token = this.authService.generateToken(updatedUser);
+    // Optionally update user's phone if provided
+    if (dto.phone) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { phone: dto.phone },
+      });
+    }
 
     return {
-      message: 'You are now a host',
-      access_token,
+      message: 'Your request to become a host is pending review by the admin.',
+      verificationId: verification.id,
+      status: verification.status,
+    };
+  }
+
+  async verifyHost(verificationId: string, status: 'APPROVED' | 'REJECTED', reviewNote?: string) {
+    const verification = await this.prisma.hostVerification.findUnique({
+      where: { id: verificationId },
+      include: { user: true },
+    });
+
+    if (!verification) {
+      throw new NotFoundException('Host verification not found');
+    }
+
+    const updatedVerification = await this.prisma.hostVerification.update({
+      where: { id: verificationId },
+      data: { status, reviewNote },
+    });
+
+    let updatedUser = verification.user;
+
+    // If approved, update user role to HOST
+    if (status === 'APPROVED') {
+      updatedUser = await this.prisma.user.update({
+        where: { id: verification.userId },
+        data: { role: Role.HOST },
+      });
+    }
+
+    return {
+      message: `Verification request has been ${status.toLowerCase()}`,
+      verification: updatedVerification,
       user: updatedUser,
     };
   }

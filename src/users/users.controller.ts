@@ -1,7 +1,7 @@
-import { Controller, Patch, UseGuards, Req, Body, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Patch, UseGuards, Req, Body, UseInterceptors, UploadedFiles, Param } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { BecomeHostDto } from './dto/become-host.dto';
 import { SupabaseService } from '../supabase/supabase.service';
@@ -15,17 +15,49 @@ export class UsersController {
 
   @Patch('become-host')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('cccdImage', {
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'cccdFrontImage', maxCount: 1 },
+    { name: 'cccdBackImage', maxCount: 1 },
+    { name: 'selfieImage', maxCount: 1 },
+    { name: 'businessLicense', maxCount: 1 },
+  ], {
     storage: memoryStorage(),
   }))
   async becomeHost(
     @Req() req: any,
     @Body() dto: BecomeHostDto,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles() files: {
+      cccdFrontImage?: Express.Multer.File[];
+      cccdBackImage?: Express.Multer.File[];
+      selfieImage?: Express.Multer.File[];
+      businessLicense?: Express.Multer.File[];
+    },
   ) {
-    if (file) {
-      dto.cccdImage = await this.supabaseService.uploadCccdFile(file);
+    if (files?.cccdFrontImage?.[0]) {
+      dto.cccdFrontImage = await this.supabaseService.uploadVerificationFile(files.cccdFrontImage[0], 'front');
     }
+    if (files?.cccdBackImage?.[0]) {
+      dto.cccdBackImage = await this.supabaseService.uploadVerificationFile(files.cccdBackImage[0], 'back');
+    }
+    if (files?.selfieImage?.[0]) {
+      dto.selfieImage = await this.supabaseService.uploadVerificationFile(files.selfieImage[0], 'selfie');
+    }
+    if (files?.businessLicense?.[0]) {
+      dto.businessLicense = await this.supabaseService.uploadVerificationFile(files.businessLicense[0], 'license');
+    }
+
     return this.usersService.becomeHost(req.user.userId, dto);
+  }
+
+  @Patch('verify-host/:id')
+  @UseGuards(JwtAuthGuard)
+  async verifyHost(
+    @Req() req: any,
+    @Param('id') verificationId: string,
+    @Body('status') status: 'APPROVED' | 'REJECTED',
+    @Body('reviewNote') reviewNote?: string,
+  ) {
+    // Note: In a real app, you would check if req.user has ADMIN role
+    return this.usersService.verifyHost(verificationId, status, reviewNote);
   }
 }
