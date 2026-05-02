@@ -173,6 +173,15 @@ export class AuthService {
     };
   }
 
+  generateToken(user: any) {
+    const payload = {
+      sub: user.id || user.sub,
+      email: user.email,
+      role: user.role,
+    };
+    return this.jwtService.sign(payload);
+  }
+
   // PROFILE
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({

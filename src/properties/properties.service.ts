@@ -95,11 +95,14 @@ export class PropertiesService {
   }
 
   // MY PROPERTIES
-  async myProperties(userId: string) {
+  async myProperties(userId: string, role: string) {
+    const where: any = {};
+    if (role !== 'ADMIN') {
+      where.hostId = userId;
+    }
+
     return this.prisma.property.findMany({
-      where: {
-        hostId: userId,
-      },
+      where,
       include: {
         rooms: true,
         reviews: true,

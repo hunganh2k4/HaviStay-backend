@@ -42,6 +42,8 @@ model User {
   password        String
   avatar          String?
   phone           String?
+  cccdNumber      String?
+  cccdImage       String?
   role            Role    @default(GUEST)
   isEmailVerified Boolean @default(false)
 
