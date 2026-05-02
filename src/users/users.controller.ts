@@ -2,24 +2,21 @@ import { Controller, Patch, UseGuards, Req, Body, UseInterceptors, UploadedFile 
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 import { BecomeHostDto } from './dto/become-host.dto';
+import { SupabaseService } from '../supabase/supabase.service';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly supabaseService: SupabaseService,
+  ) {}
 
   @Patch('become-host')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('cccdImage', {
-    storage: diskStorage({
-      destination: './uploads',
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
-      },
-    }),
+    storage: memoryStorage(),
   }))
   async becomeHost(
     @Req() req: any,
@@ -27,7 +24,7 @@ export class UsersController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (file) {
-      dto.cccdImage = file.filename;
+      dto.cccdImage = await this.supabaseService.uploadCccdFile(file);
     }
     return this.usersService.becomeHost(req.user.userId, dto);
   }

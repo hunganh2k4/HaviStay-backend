@@ -11,6 +11,7 @@ import { BookingsModule } from './bookings/bookings.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AdminModule } from './admin/admin.module';
+import { SupabaseModule } from './supabase/supabase.module';
 
 import { AppController } from './app.controller';
 @Module({
@@ -28,6 +29,7 @@ import { AppController } from './app.controller';
     ReviewsModule,
     PaymentsModule,
     AdminModule,
+    SupabaseModule,
   ],
   controllers: [AppController],
 })

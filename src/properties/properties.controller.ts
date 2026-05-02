@@ -12,10 +12,10 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 
 import { PropertiesService } from './properties.service';
+import { SupabaseService } from '../supabase/supabase.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 
@@ -27,6 +27,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 export class PropertiesController {
   constructor(
     private readonly propertiesService: PropertiesService,
+    private readonly supabaseService: SupabaseService,
   ) { }
 
   // CREATE PROPERTY
@@ -34,21 +35,16 @@ export class PropertiesController {
   @Roles('HOST', 'ADMIN')
   @Post()
   @UseInterceptors(FilesInterceptor('images', 10, {
-    storage: diskStorage({
-      destination: './uploads',
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, `property-${uniqueSuffix}${extname(file.originalname)}`);
-      },
-    }),
+    storage: memoryStorage(),
   }))
-  create(
+  async create(
     @Req() req: any,
     @Body() dto: CreatePropertyDto,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
     if (files && files.length > 0) {
-      dto.images = files.map(file => file.filename);
+      const uploadPromises = files.map(file => this.supabaseService.uploadFile(file));
+      dto.images = await Promise.all(uploadPromises);
     }
     return this.propertiesService.create(
       req.user.userId,
