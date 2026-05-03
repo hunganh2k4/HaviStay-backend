@@ -72,7 +72,7 @@ export class BookingsService {
   }
 
   async getMyBookings(userId: string) {
-    return this.prisma.booking.findMany({
+    const bookings = await this.prisma.booking.findMany({
       where: { userId },
       include: {
         room: {
@@ -83,5 +83,26 @@ export class BookingsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    // Check review status for each booking's property
+    const bookingsWithReviewStatus = await Promise.all(
+      bookings.map(async (booking) => {
+        const review = await this.prisma.review.findUnique({
+          where: {
+            userId_propertyId: {
+              userId,
+              propertyId: booking.room.propertyId,
+            },
+          },
+        });
+        return {
+          ...booking,
+          isReviewed: !!review,
+          reviewId: review?.id,
+        };
+      }),
+    );
+
+    return bookingsWithReviewStatus;
   }
 }

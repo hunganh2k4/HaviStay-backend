@@ -169,6 +169,7 @@ model Review {
 
   rating  Int
   comment String
+  images  String[] @default([])
 
   user     User     @relation(fields: [userId], references: [id])
   property Property @relation(fields: [propertyId], references: [id])
