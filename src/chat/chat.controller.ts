@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Req, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Req, Put, Query } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -12,6 +12,11 @@ export class ChatController {
     return this.chatService.getConversations(req.user.userId);
   }
 
+  @Get('unread-count')
+  getUnreadCount(@Req() req: any) {
+    return this.chatService.getUnreadCount(req.user.userId);
+  }
+
   @Get('messages/:conversationId')
   getMessages(@Param('conversationId') conversationId: string, @Req() req: any) {
     return this.chatService.getMessages(conversationId, req.user.userId);
@@ -23,8 +28,12 @@ export class ChatController {
   }
 
   @Get('find-or-create/:partnerId')
-  findOrCreateConversation(@Req() req: any, @Param('partnerId') partnerId: string) {
-    return this.chatService.findOrCreateConversation(req.user.userId, partnerId);
+  findOrCreateConversation(
+    @Req() req: any,
+    @Param('partnerId') partnerId: string,
+    @Query('propertyId') propertyId?: string,
+  ) {
+    return this.chatService.findOrCreateConversation(req.user.userId, partnerId, propertyId);
   }
 
   @Put('read/:conversationId')

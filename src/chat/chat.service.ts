@@ -20,6 +20,9 @@ export class ChatService {
         participant2: {
           select: { id: true, name: true, avatar: true },
         },
+        property: {
+          select: { id: true, title: true, images: true },
+        },
         messages: {
           orderBy: { createdAt: 'desc' },
           take: 1,
@@ -94,12 +97,12 @@ export class ChatService {
     return message;
   }
 
-  async findOrCreateConversation(user1Id: string, user2Id: string) {
+  async findOrCreateConversation(user1Id: string, user2Id: string, propertyId?: string) {
     let conversation = await this.prisma.conversation.findFirst({
       where: {
         OR: [
-          { participant1Id: user1Id, participant2Id: user2Id },
-          { participant1Id: user2Id, participant2Id: user1Id },
+          { participant1Id: user1Id, participant2Id: user2Id, propertyId: propertyId || null },
+          { participant1Id: user2Id, participant2Id: user1Id, propertyId: propertyId || null },
         ],
       },
       include: {
@@ -108,6 +111,9 @@ export class ChatService {
         },
         participant2: {
           select: { id: true, name: true, avatar: true },
+        },
+        property: {
+          select: { id: true, title: true, images: true },
         },
         messages: {
           orderBy: { createdAt: 'desc' },
@@ -121,6 +127,7 @@ export class ChatService {
         data: {
           participant1Id: user1Id,
           participant2Id: user2Id,
+          propertyId: propertyId || null,
         },
         include: {
           participant1: {
@@ -128,6 +135,9 @@ export class ChatService {
           },
           participant2: {
             select: { id: true, name: true, avatar: true },
+          },
+          property: {
+            select: { id: true, title: true, images: true },
           },
           messages: true,
         },
@@ -145,6 +155,21 @@ export class ChatService {
         isRead: false,
       },
       data: { isRead: true },
+    });
+  }
+
+  async getUnreadCount(userId: string) {
+    return this.prisma.message.count({
+      where: {
+        conversation: {
+          OR: [
+            { participant1Id: userId },
+            { participant2Id: userId },
+          ],
+        },
+        senderId: { not: userId },
+        isRead: false,
+      },
     });
   }
 }

@@ -106,6 +106,7 @@ model Property {
   rooms     Room[]
   reviews   Review[]
   wishlists Wishlist[]
+  conversations Conversation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -203,9 +204,11 @@ model Conversation {
 
   participant1Id String
   participant2Id String
+  propertyId     String?
 
-  participant1 User @relation("Participant1", fields: [participant1Id], references: [id])
-  participant2 User @relation("Participant2", fields: [participant2Id], references: [id])
+  participant1 User      @relation("Participant1", fields: [participant1Id], references: [id])
+  participant2 User      @relation("Participant2", fields: [participant2Id], references: [id])
+  property     Property? @relation(fields: [propertyId], references: [id])
 
   messages Message[]
 
@@ -213,7 +216,7 @@ model Conversation {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  @@unique([participant1Id, participant2Id])
+  @@unique([participant1Id, participant2Id, propertyId])
 }
 
 model Message {
