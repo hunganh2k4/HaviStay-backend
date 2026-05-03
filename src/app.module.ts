@@ -13,6 +13,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { AdminModule } from './admin/admin.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { RedisModule } from './redis/redis.module';
+import { WishlistsModule } from './wishlists/wishlists.module';
 
 import { AppController } from './app.controller';
 @Module({
@@ -32,6 +33,7 @@ import { AppController } from './app.controller';
     PaymentsModule,
     AdminModule,
     SupabaseModule,
+    WishlistsModule,
   ],
   controllers: [AppController],
 })
