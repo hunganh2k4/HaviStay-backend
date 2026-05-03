@@ -79,11 +79,29 @@ export class PropertiesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('HOST', 'ADMIN')
   @Patch(':id')
-  update(
+  @UseInterceptors(FilesInterceptor('images', 10, {
+    storage: memoryStorage(),
+  }))
+  async update(
     @Param('id') id: string,
     @Req() req: any,
     @Body() dto: UpdatePropertyDto,
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
+    let uploadedImages: string[] = [];
+    if (files && files.length > 0) {
+      const uploadPromises = files.map(file => this.supabaseService.uploadFile(file));
+      uploadedImages = await Promise.all(uploadPromises);
+    }
+
+    if (typeof dto.images === 'string') {
+      dto.images = [dto.images];
+    } else if (!dto.images) {
+      dto.images = [];
+    }
+
+    dto.images = [...dto.images, ...uploadedImages];
+
     return this.propertiesService.update(
       id,
       req.user.userId,
