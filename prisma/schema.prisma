@@ -91,7 +91,10 @@ model Property {
 
   images String[]
 
-  isPublished Boolean @default(true)
+  isPublished Boolean @default(false)
+  
+  verificationStatus VerificationStatus?
+  reviewNote         String?
 
   hostId String
   host   User   @relation(fields: [hostId], references: [id])

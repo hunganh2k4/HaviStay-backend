@@ -13,7 +13,7 @@ export class AdminService {
         where: { status: VerificationStatus.PENDING },
       }),
       this.prisma.property.count({
-        where: { isPublished: false },
+        where: { verificationStatus: VerificationStatus.PENDING },
       }),
     ]);
 
@@ -74,12 +74,10 @@ export class AdminService {
   }
 
   // ─── PROPERTIES ──────────────────────────────────────────────────────────────
-  async getProperties(published?: string) {
+  async getProperties(verificationStatus?: string) {
     const where: any = {};
-    if (published === 'false') {
-      where.isPublished = false;
-    } else if (published === 'true') {
-      where.isPublished = true;
+    if (verificationStatus) {
+      where.verificationStatus = verificationStatus as VerificationStatus;
     }
 
     return this.prisma.property.findMany({
@@ -95,7 +93,7 @@ export class AdminService {
     });
   }
 
-  async togglePropertyPublish(propertyId: string, isPublished: boolean) {
+  async verifyProperty(propertyId: string, status: 'APPROVED' | 'REJECTED', reviewNote?: string) {
     const property = await this.prisma.property.findUnique({
       where: { id: propertyId },
     });
@@ -106,7 +104,11 @@ export class AdminService {
 
     return this.prisma.property.update({
       where: { id: propertyId },
-      data: { isPublished },
+      data: { 
+        verificationStatus: status,
+        isPublished: status === 'APPROVED',
+        reviewNote: status === 'REJECTED' ? reviewNote : null,
+      },
     });
   }
 

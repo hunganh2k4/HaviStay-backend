@@ -46,18 +46,19 @@ export class AdminController {
     return this.adminService.reviewHostVerification(id, status, reviewNote);
   }
 
-  // GET /admin/properties?published=false
+  // GET /admin/properties?verificationStatus=PENDING
   @Get('properties')
-  getProperties(@Query('published') published?: string) {
-    return this.adminService.getProperties(published);
+  getProperties(@Query('verificationStatus') verificationStatus?: string) {
+    return this.adminService.getProperties(verificationStatus);
   }
 
-  // PATCH /admin/properties/:id/publish
-  @Patch('properties/:id/publish')
-  togglePropertyPublish(
+  // PATCH /admin/properties/:id/verify
+  @Patch('properties/:id/verify')
+  verifyProperty(
     @Param('id') id: string,
-    @Body('isPublished') isPublished: boolean,
+    @Body('status') status: 'APPROVED' | 'REJECTED',
+    @Body('reviewNote') reviewNote?: string,
   ) {
-    return this.adminService.togglePropertyPublish(id, isPublished);
+    return this.adminService.verifyProperty(id, status, reviewNote);
   }
 }

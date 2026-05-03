@@ -151,6 +151,29 @@ export class PropertiesService {
     });
   }
 
+  // REQUEST VERIFICATION
+  async requestVerification(propertyId: string, userId: string) {
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
+
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+
+    if (property.hostId !== userId) {
+      throw new ForbiddenException('You can only request verification for your own property');
+    }
+
+    return this.prisma.property.update({
+      where: { id: propertyId },
+      data: {
+        verificationStatus: 'PENDING',
+        reviewNote: null,
+      },
+    });
+  }
+
   // DELETE
   async delete(
     propertyId: string,

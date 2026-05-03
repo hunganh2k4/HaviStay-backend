@@ -92,6 +92,20 @@ export class PropertiesController {
     );
   }
 
+  // REQUEST VERIFICATION
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('HOST', 'ADMIN')
+  @Patch(':id/request-verification')
+  requestVerification(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    return this.propertiesService.requestVerification(
+      id,
+      req.user.userId,
+    );
+  }
+
   // DELETE PROPERTY
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('HOST', 'ADMIN')
