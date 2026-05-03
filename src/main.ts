@@ -9,6 +9,10 @@ async function bootstrap() {
   // Initialize cookie parser
   app.use(cookieParser());
 
+  // Trust proxy for secure cookies on Render
+  const server = app.getHttpAdapter().getInstance();
+  server.set('trust proxy', 1);
+
   // Increase payload size limit (fix 413 Payload Too Large)
   app.use(express.json({ limit: '20mb' }));
   app.use(express.urlencoded({ limit: '20mb', extended: true }));
