@@ -59,9 +59,13 @@ model User {
   properties Property[]
   bookings   Booking[]
   reviews    Review[]
-  wishlists  Wishlist[]
-  payments   Payment[]
+  wishlists         Wishlist[]
+  payments          Payment[]
   hostVerifications HostVerification[]
+  messages          Message[]
+
+  conversations1 Conversation[] @relation("Participant1")
+  conversations2 Conversation[] @relation("Participant2")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -193,6 +197,40 @@ model Wishlist {
 
   @@unique([userId, propertyId])
 }
+
+model Conversation {
+  id String @id @default(uuid())
+
+  participant1Id String
+  participant2Id String
+
+  participant1 User @relation("Participant1", fields: [participant1Id], references: [id])
+  participant2 User @relation("Participant2", fields: [participant2Id], references: [id])
+
+  messages Message[]
+
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([participant1Id, participant2Id])
+}
+
+model Message {
+  id String @id @default(uuid())
+
+  conversationId String
+  senderId       String
+
+  content String
+  isRead  Boolean @default(false)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       User         @relation(fields: [senderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
 
 model Payment {
   id String @id @default(uuid())
