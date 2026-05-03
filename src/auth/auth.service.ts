@@ -8,6 +8,8 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { MailService } from '../mail/mail.service';
+import { RedisService } from '../redis/redis.service';
+import { parseExpiryToSeconds } from '../utils/parse-expiry.util';
 
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
@@ -18,6 +20,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
+    private readonly redisService: RedisService,
   ) { }
 
   // REGISTER + SEND VERIFY EMAIL
@@ -158,11 +161,29 @@ export class AuthService {
       role: user.role,
     };
 
-    const access_token = this.jwtService.sign(payload);
+    // Generate tokens
+    const access_token = this.jwtService.sign(payload, {
+      expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '15m') as any,
+    });
+
+    const refresh_token = this.jwtService.sign(payload, {
+      expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any,
+    });
+
+    // Store refresh token in Redis (with expiration)
+    const refreshExpiresIn = parseExpiryToSeconds(
+      process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+    );
+    await this.redisService.set(
+      `refresh_token:${user.id}:${refresh_token}`,
+      JSON.stringify({ userId: user.id, email: user.email }),
+      refreshExpiresIn,
+    );
 
     return {
       message: 'Login successful',
       access_token,
+      refresh_token,
       user: {
         id: user.id,
         name: user.name,
@@ -179,7 +200,9 @@ export class AuthService {
       email: user.email,
       role: user.role,
     };
-    return this.jwtService.sign(payload);
+    return this.jwtService.sign(payload, {
+      expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '15m') as any,
+    });
   }
 
   // PROFILE
@@ -206,5 +229,70 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  // REFRESH TOKEN
+  async refresh(refreshToken: string) {
+    try {
+      // Decode refresh token to get user info
+      const payload = this.jwtService.verify(refreshToken);
+      const userId = payload.sub;
+
+      // Verify refresh token exists in Redis
+      const tokenKey = `refresh_token:${userId}:${refreshToken}`;
+      const tokenExists = await this.redisService.exists(tokenKey);
+
+      if (!tokenExists) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      const newPayload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+      };
+
+      // Generate new access token
+      const access_token = this.jwtService.sign(newPayload, {
+        expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '15m') as any,
+      });
+
+      return {
+        access_token,
+        message: 'Token refreshed successfully',
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
+
+  // LOGOUT
+  async logout(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify(refreshToken);
+      const userId = payload.sub;
+      const tokenKey = `refresh_token:${userId}:${refreshToken}`;
+      await this.redisService.del(tokenKey);
+
+      return {
+        message: 'Logout successful',
+      };
+    } catch (error) {
+      // Even if token is invalid, consider logout successful
+      return {
+        message: 'Logout successful',
+      };
+    }
   }
 }
