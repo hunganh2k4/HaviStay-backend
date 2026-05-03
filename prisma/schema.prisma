@@ -199,7 +199,8 @@ model Payment {
   userId    String
   bookingId String @unique
 
-  stripeSessionId String? @unique
+  transactionId String? @unique // Stripe Session ID or VNPAY Transaction ID
+  provider      String?         // 'STRIPE', 'VNPAY', etc.
 
   amount   Float
   currency String @default("usd")
