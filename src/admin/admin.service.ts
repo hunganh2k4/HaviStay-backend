@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role, VerificationStatus } from '@prisma/client';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   // ─── PENDING COUNTS (for notification badges) ───────────────────────────────
   async getPendingCounts() {
@@ -66,6 +70,14 @@ export class AdminService {
       });
     }
 
+    if (updatedUser.email) {
+      await this.mailService.sendHostVerificationStatusEmail(
+        updatedUser.email,
+        status,
+        reviewNote
+      );
+    }
+
     return {
       message: `Verification request has been ${status.toLowerCase()}`,
       verification: updatedVerification,
@@ -96,13 +108,14 @@ export class AdminService {
   async verifyProperty(propertyId: string, status: 'APPROVED' | 'REJECTED', reviewNote?: string) {
     const property = await this.prisma.property.findUnique({
       where: { id: propertyId },
+      include: { host: true },
     });
 
     if (!property) {
       throw new NotFoundException('Property not found');
     }
 
-    return this.prisma.property.update({
+    const updatedProperty = await this.prisma.property.update({
       where: { id: propertyId },
       data: { 
         verificationStatus: status,
@@ -110,6 +123,17 @@ export class AdminService {
         reviewNote: status === 'REJECTED' ? reviewNote : null,
       },
     });
+
+    if (property.host?.email) {
+      await this.mailService.sendPropertyVerificationStatusEmail(
+        property.host.email,
+        property.title,
+        status,
+        reviewNote
+      );
+    }
+
+    return updatedProperty;
   }
 
   // ─── DASHBOARD STATS ─────────────────────────────────────────────────────────
