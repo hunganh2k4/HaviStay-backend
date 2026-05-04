@@ -8,6 +8,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 
+export interface SearchPropertiesDto {
+  location?: string;
+  checkIn?: string;  // ISO date string
+  checkOut?: string; // ISO date string
+  guests?: number;
+}
+
 @Injectable()
 export class PropertiesService {
   constructor(
@@ -25,6 +32,80 @@ export class PropertiesService {
         hostId: userId,
       },
     });
+  }
+
+  // SEARCH WITH FILTERS
+  async search(dto: SearchPropertiesDto) {
+    const { location, checkIn, checkOut, guests } = dto;
+
+    const where: any = {
+      isPublished: true,
+      verificationStatus: 'APPROVED',
+    };
+
+    // Location filter (case-insensitive partial match on location or address)
+    if (location && location.trim()) {
+      where.OR = [
+        { location: { contains: location, mode: 'insensitive' } },
+        { address: { contains: location, mode: 'insensitive' } },
+        { country: { contains: location, mode: 'insensitive' } },
+      ];
+    }
+
+    // Guest count filter: property must have at least one room with capacity >= guests
+    if (guests && guests > 0) {
+      where.rooms = {
+        some: {
+          guests: { gte: guests },
+        },
+      };
+    }
+
+    const properties = await this.prisma.property.findMany({
+      where,
+      include: {
+        host: { select: { id: true, name: true, avatar: true } },
+        rooms: {
+          include: {
+            bookings: {
+              where: {
+                status: { notIn: ['CANCELLED'] },
+              },
+              select: {
+                checkIn: true,
+                checkOut: true,
+              },
+            },
+          },
+        },
+        reviews: { select: { rating: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Filter by date availability if checkIn and checkOut provided
+    if (checkIn && checkOut) {
+      const checkInDate = new Date(checkIn);
+      const checkOutDate = new Date(checkOut);
+
+      return properties.filter((property) => {
+        // Keep property if it has at least one room with no conflicting bookings
+        return property.rooms.some((room) => {
+          // Room must meet guest capacity if specified
+          if (guests && room.guests < guests) return false;
+
+          const hasConflict = room.bookings.some((booking) => {
+            const bIn = new Date(booking.checkIn);
+            const bOut = new Date(booking.checkOut);
+            // Overlapping if: bIn < checkOut AND bOut > checkIn
+            return bIn < checkOutDate && bOut > checkInDate;
+          });
+          return !hasConflict;
+        });
+      });
+    }
+
+    return properties;
   }
 
   // GET ALL

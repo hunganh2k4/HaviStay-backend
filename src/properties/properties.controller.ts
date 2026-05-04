@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UploadedFiles,
   UseGuards,
@@ -50,6 +51,22 @@ export class PropertiesController {
       req.user.userId,
       dto,
     );
+  }
+
+  // SEARCH PROPERTIES (must be before :id to avoid conflict)
+  @Get('search')
+  search(
+    @Query('location') location?: string,
+    @Query('checkIn') checkIn?: string,
+    @Query('checkOut') checkOut?: string,
+    @Query('guests') guests?: string,
+  ) {
+    return this.propertiesService.search({
+      location,
+      checkIn,
+      checkOut,
+      guests: guests ? parseInt(guests, 10) : undefined,
+    });
   }
 
   // GET ALL PUBLIC PROPERTIES
