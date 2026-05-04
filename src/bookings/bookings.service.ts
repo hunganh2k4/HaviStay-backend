@@ -105,4 +105,124 @@ export class BookingsService {
 
     return bookingsWithReviewStatus;
   }
+
+  async getHostEarnings(hostId: string) {
+    // Get all CONFIRMED/COMPLETED bookings for rooms belonging to this host
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        status: { in: ['CONFIRMED', 'COMPLETED'] },
+        room: {
+          property: { hostId },
+        },
+      },
+      include: {
+        room: {
+          include: {
+            property: {
+              select: { id: true, title: true, images: true },
+            },
+          },
+        },
+      },
+      orderBy: { checkIn: 'asc' },
+    });
+
+    const now = new Date();
+
+    // 1. Monthly (Last 12 months)
+    const monthlyRevenue = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+      return {
+        key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+        label: `Thg ${d.getMonth() + 1}/${d.getFullYear()}`,
+        revenue: 0,
+      };
+    });
+
+    // 2. Weekly (Last 12 weeks)
+    const weeklyRevenue = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(now);
+      d.setDate(d.getDate() - (11 - i) * 7);
+      // Get the start of that week (Monday)
+      const day = d.getDay() || 7;
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - day + 1);
+      return {
+        key: d.toISOString().split('T')[0],
+        label: `Tuần ${d.getDate()}/${d.getMonth() + 1}`,
+        revenue: 0,
+        date: new Date(d),
+      };
+    });
+
+    // 3. Day of Week (Mon-Sun)
+    const daysOfWeek = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+    const dayOfWeekRevenue = daysOfWeek.map((label) => ({
+      label,
+      revenue: 0,
+    }));
+
+    // Per-property earnings
+    const propertyMap = new Map<string, any>();
+    let totalRevenue = 0;
+    let totalNights = 0;
+
+    for (const booking of bookings) {
+      const revenue = Number(booking.totalPrice);
+      totalRevenue += revenue;
+      totalNights += booking.nights;
+
+      const checkInDate = new Date(booking.checkIn);
+
+      // Add to Monthly
+      const monthKey = `${checkInDate.getFullYear()}-${String(checkInDate.getMonth() + 1).padStart(2, '0')}`;
+      const mMatch = monthlyRevenue.find((m) => m.key === monthKey);
+      if (mMatch) mMatch.revenue += revenue;
+
+      // Add to Weekly
+      const weekMatch = weeklyRevenue.slice().reverse().find(w => checkInDate >= w.date);
+      if (weekMatch) weekMatch.revenue += revenue;
+
+      // Add to Day of Week
+      const dayIdx = (checkInDate.getDay() + 6) % 7; // Mon=0, Sun=6
+      dayOfWeekRevenue[dayIdx].revenue += revenue;
+
+      // Add to Per Property
+      const prop = booking.room.property;
+      if (!propertyMap.has(prop.id)) {
+        propertyMap.set(prop.id, {
+          id: prop.id,
+          title: prop.title,
+          image: prop.images?.[0] || '',
+          revenue: 0,
+          bookings: 0,
+          nights: 0,
+        });
+      }
+      const pEntry = propertyMap.get(prop.id);
+      pEntry.revenue += revenue;
+      pEntry.bookings += 1;
+      pEntry.nights += booking.nights;
+    }
+
+    const bestMonth = monthlyRevenue.reduce(
+      (best, m) => (m.revenue > best.revenue ? m : best),
+      monthlyRevenue[0],
+    );
+
+    return {
+      totalRevenue,
+      totalBookings: bookings.length,
+      totalNights,
+      avgRevenuePerBooking:
+        bookings.length > 0 ? Math.round(totalRevenue / bookings.length) : 0,
+      bestMonth: bestMonth.revenue > 0 ? bestMonth : null,
+      monthlyRevenue,
+      weeklyRevenue,
+      dayOfWeekRevenue,
+      byProperty: Array.from(propertyMap.values()).sort(
+        (a, b) => b.revenue - a.revenue,
+      ),
+    };
+  }
 }

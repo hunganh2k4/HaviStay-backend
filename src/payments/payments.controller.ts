@@ -25,8 +25,10 @@ export class PaymentsController {
     @Req() req: any,
     @Body('bookingId') bookingId: string,
   ) {
-    const ipAddr =
-      req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    let ipAddr =
+      req.headers['x-forwarded-for'] || req.connection.remoteAddress || '127.0.0.1';
+
+    if (ipAddr === '::1') ipAddr = '127.0.0.1';
 
     const url = await this.paymentsService.createVnpayUrl(
       req.user.userId,

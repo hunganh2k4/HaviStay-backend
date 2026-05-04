@@ -28,6 +28,12 @@ export class BookingsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('host/earnings')
+  getHostEarnings(@Req() req: any) {
+    return this.bookingsService.getHostEarnings(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.bookingsService.findOne(id);

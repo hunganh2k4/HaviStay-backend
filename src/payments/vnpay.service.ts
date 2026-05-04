@@ -21,6 +21,9 @@ export class VnpayService {
     const date = new Date();
     const createDate = moment(date).format('YYYYMMDDHHmmss');
 
+    // Ensure amount is at least 10,000 VND
+    const amount = Math.max(params.amount, 10000);
+
     const vnp_Params: any = {};
     vnp_Params['vnp_Version'] = '2.1.0';
     vnp_Params['vnp_Command'] = 'pay';
@@ -28,12 +31,13 @@ export class VnpayService {
     vnp_Params['vnp_Locale'] = 'vn';
     vnp_Params['vnp_CurrCode'] = 'VND';
     vnp_Params['vnp_TxnRef'] = params.bookingId;
-    vnp_Params['vnp_OrderInfo'] = 'Thanh toan dat phong HaviStay: ' + params.bookingId;
+    vnp_Params['vnp_OrderInfo'] = 'HaviStay ' + params.bookingId.substring(0, 8);
     vnp_Params['vnp_OrderType'] = 'other';
-    vnp_Params['vnp_Amount'] = params.amount * 100; // VNPAY expects amount * 100
+    vnp_Params['vnp_Amount'] = amount * 100;
     vnp_Params['vnp_ReturnUrl'] = returnUrl;
-    vnp_Params['vnp_IpAddr'] = params.ipAddr;
+    vnp_Params['vnp_IpAddr'] = params.ipAddr.includes(':') ? '127.0.0.1' : params.ipAddr;
     vnp_Params['vnp_CreateDate'] = createDate;
+    vnp_Params['vnp_BankCode'] = 'NCB'; // Jump straight to test card entry
 
     // Sort params
     const sortedParams = this.sortObject(vnp_Params);
