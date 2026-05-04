@@ -123,10 +123,10 @@ model Room {
 
   description String?
 
-  pricePerNight Float
+  pricePerNight Int
 
-  cleaningFee Float @default(0)
-  serviceFee  Float @default(0)
+  cleaningFee Int @default(0)
+  serviceFee  Int @default(0)
 
   guests    Int
   bedrooms  Int
@@ -153,7 +153,7 @@ model Booking {
   nights      Int
   guestsCount Int
 
-  totalPrice Float
+  totalPrice Int
 
   status BookingStatus @default(PENDING)
 
@@ -244,7 +244,7 @@ model Payment {
   transactionId String? @unique // Stripe Session ID or VNPAY Transaction ID
   provider      String?         // 'STRIPE', 'VNPAY', etc.
 
-  amount   Float
+  amount   Int
   currency String @default("usd")
 
   status PaymentStatus @default(PENDING)
