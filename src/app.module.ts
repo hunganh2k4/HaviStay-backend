@@ -15,6 +15,7 @@ import { SupabaseModule } from './supabase/supabase.module';
 import { RedisModule } from './redis/redis.module';
 import { WishlistsModule } from './wishlists/wishlists.module';
 import { ChatModule } from './chat/chat.module';
+import { PropertyServicesModule } from './property-services/property-services.module';
 
 import { AppController } from './app.controller';
 @Module({
@@ -36,6 +37,7 @@ import { AppController } from './app.controller';
     SupabaseModule,
     WishlistsModule,
     ChatModule,
+    PropertyServicesModule,
   ],
   controllers: [AppController],
 })

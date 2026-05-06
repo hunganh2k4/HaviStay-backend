@@ -27,7 +27,26 @@ export class BookingsService {
     }
 
     const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-    const totalPrice = (room.pricePerNight * nights) + room.cleaningFee + room.serviceFee;
+    let totalPrice = (room.pricePerNight * nights) + room.cleaningFee + room.serviceFee;
+
+    // 2.1 Calculate services price
+    const selectedServicesData: any[] = [];
+    if (dto.selectedServices && dto.selectedServices.length > 0) {
+      for (const item of dto.selectedServices) {
+        const service = await this.prisma.propertyService.findUnique({
+          where: { id: item.serviceId },
+        });
+
+        if (service && service.isAvailable) {
+          totalPrice += service.price * item.quantity;
+          selectedServicesData.push({
+            propertyServiceId: service.id,
+            quantity: item.quantity,
+            priceAtBooking: service.price,
+          });
+        }
+      }
+    }
 
     // 3. Create booking
     const booking = await this.prisma.booking.create({
@@ -40,6 +59,9 @@ export class BookingsService {
         guestsCount: dto.guestsCount,
         totalPrice,
         status: 'PENDING',
+        bookingServices: {
+          create: selectedServicesData,
+        },
       },
     });
 
@@ -59,6 +81,11 @@ export class BookingsService {
           select: {
             name: true,
             email: true,
+          },
+        },
+        bookingServices: {
+          include: {
+            propertyService: true,
           },
         },
       },

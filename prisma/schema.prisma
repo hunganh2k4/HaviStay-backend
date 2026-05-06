@@ -59,6 +59,7 @@ model Property {
   host               User                @relation(fields: [hostId], references: [id])
   reviews            Review[]
   rooms              Room[]
+  services           PropertyService[]
   wishlists          Wishlist[]
 }
 
@@ -96,7 +97,8 @@ model Booking {
   roomId      String
   room        Room          @relation(fields: [roomId], references: [id])
   user        User          @relation(fields: [userId], references: [id])
-  payment     Payment?
+  payment         Payment?
+  bookingServices BookingService[]
 }
 
 model Review {
@@ -224,4 +226,28 @@ enum RoomType {
   VIP
   DELUXE
   SUITE
+}
+
+model PropertyService {
+  id              String           @id @default(uuid())
+  propertyId      String
+  name            String
+  description     String?
+  price           Int              @default(0)
+  isAvailable     Boolean          @default(true)
+  images          String[]         @default([])
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  property        Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  bookingServices BookingService[]
+}
+
+model BookingService {
+  id                String          @id @default(uuid())
+  bookingId         String
+  propertyServiceId String
+  quantity          Int             @default(1)
+  priceAtBooking    Int
+  booking           Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  propertyService   PropertyService @relation(fields: [propertyServiceId], references: [id])
 }

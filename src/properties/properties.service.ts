@@ -152,6 +152,7 @@ export class PropertiesService {
             },
           },
           rooms: true,
+          services: true,
           reviews: {
             include: {
               user: {
@@ -186,6 +187,7 @@ export class PropertiesService {
       where,
       include: {
         rooms: true,
+        services: true,
         reviews: true,
       },
       orderBy: {
