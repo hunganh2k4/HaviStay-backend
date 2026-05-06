@@ -107,6 +107,11 @@ export class BookingsService {
             property: true,
           },
         },
+        bookingServices: {
+          include: {
+            propertyService: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
